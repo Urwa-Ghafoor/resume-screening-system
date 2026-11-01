@@ -21,5 +21,4 @@ Kaggle UpdatedResumeDataSet (962 resumes, 25 categories)
 ## Future Work
 - PDF/DOCX resume upload
 
-## Team
-Urwa Ghafoor, Sadia Anwar (University of South Asia)
+
