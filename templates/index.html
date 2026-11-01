@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Resume Classifier — AI Powered</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0f;
+      --surface: #13131a;
+      --card: #1c1c28;
+      --border: #2a2a3d;
+      --accent: #6c63ff;
+      --accent2: #ff6584;
+      --accent3: #43e97b;
+      --text: #e8e8f0;
+      --muted: #7a7a9a;
+      --glow: rgba(108, 99, 255, 0.3);
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(108,99,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(108,99,255,0.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(100px);
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.25;
+    }
+    .orb-1 { width: 500px; height: 500px; background: var(--accent); top: -150px; left: -100px; }
+    .orb-2 { width: 400px; height: 400px; background: var(--accent2); bottom: -100px; right: -100px; }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    header { text-align: center; padding: 3rem 0 2.5rem; }
+    .badge {
+      display: inline-block;
+      background: linear-gradient(135deg, rgba(108,99,255,0.2), rgba(255,101,132,0.2));
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.75rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding: 0.4rem 1rem;
+      border-radius: 100px;
+      margin-bottom: 1.5rem;
+    }
+    h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(2.2rem, 5vw, 3.5rem);
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 1rem;
+    }
+    h1 span {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .subtitle {
+      color: var(--muted);
+      font-size: 1.05rem;
+      max-width: 500px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2.5rem;
+      margin-bottom: 1.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent), var(--accent2), transparent);
+    }
+
+    .label {
+      font-family: 'Syne', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .label .dot {
+      width: 6px; height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    textarea {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      line-height: 1.65;
+      padding: 1.2rem;
+      resize: vertical;
+      min-height: 220px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    textarea::placeholder { color: var(--muted); }
+    textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--glow);
+    }
+
+    .char-count {
+      text-align: right;
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 0.5rem;
+    }
+
+    .btn-predict {
+      width: 100%;
+      padding: 1rem;
+      margin-top: 1.5rem;
+      background: linear-gradient(135deg, var(--accent), #8b84ff);
+      border: none;
+      border-radius: 12px;
+      color: white;
+      font-family: 'Syne', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+      transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+    }
+    .btn-predict:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(108,99,255,0.5);
+    }
+    .btn-predict:active:not(:disabled) { transform: translateY(0); }
+    .btn-predict:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #result { display: none; animation: fadeUp 0.4s ease; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .result-inner { display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; }
+    .result-icon {
+      width: 64px; height: 64px;
+      background: linear-gradient(135deg, rgba(67,233,123,0.15), rgba(67,233,123,0.05));
+      border: 1px solid rgba(67,233,123,0.3);
+      border-radius: 16px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.8rem;
+      flex-shrink: 0;
+    }
+    .result-text { flex: 1; }
+    .result-label { font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.3rem; }
+    .result-category {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: var(--accent3);
+      line-height: 1.1;
+    }
+    .confidence-bar-wrap { margin-top: 0.8rem; }
+    .confidence-text { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--muted); margin-bottom: 0.3rem; }
+    .confidence-bar { height: 6px; background: var(--border); border-radius: 100px; overflow: hidden; }
+    .confidence-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent3));
+      border-radius: 100px;
+      transition: width 0.8s cubic-bezier(0.34,1.56,0.64,1);
+    }
+
+    #error {
+      display: none;
+      background: rgba(255,101,132,0.1);
+      border: 1px solid rgba(255,101,132,0.3);
+      border-radius: 12px;
+      padding: 1rem 1.2rem;
+      color: var(--accent2);
+      font-size: 0.9rem;
+      margin-top: 1rem;
+      animation: fadeUp 0.3s ease;
+    }
+
+    .categories-section { margin-top: 2rem; }
+    .categories-section h3 {
+      font-family: 'Syne', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--muted);
+      margin-bottom: 1rem;
+      letter-spacing: 0.05em;
+    }
+    .tags { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .tag {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 0.3rem 0.85rem;
+      font-size: 0.78rem;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .tag:hover { border-color: var(--accent); color: var(--text); background: rgba(108,99,255,0.1); }
+    .tag.active { border-color: var(--accent); color: var(--accent); background: rgba(108,99,255,0.15); }
+
+    footer { text-align: center; color: var(--muted); font-size: 0.8rem; padding: 2rem 0 3rem; }
+    footer span { color: var(--accent); }
+
+    @media (max-width: 600px) {
+      .card { padding: 1.5rem; }
+      .result-category { font-size: 1.4rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+
+  <div class="container">
+    <header>
+      <div class="badge">🤖 AI Powered &nbsp;·&nbsp; NLP Classification</div>
+      <h1>Resume <span>Category</span><br/>Classifier</h1>
+      <p class="subtitle">Paste any resume text and our ML model will instantly predict the most suitable job category.</p>
+    </header>
+
+    <div class="card">
+      <div class="label"><span class="dot"></span> Resume Text Input</div>
+      <textarea
+        id="resumeInput"
+        placeholder="Paste your resume text here...&#10;&#10;Example: Python Developer with 3 years experience in Django, Flask, REST APIs, Machine Learning..."
+        oninput="updateCount()"
+      ></textarea>
+      <div class="char-count"><span id="charCount">0</span> characters</div>
+
+      <button class="btn-predict" id="predictBtn" onclick="predict()">
+        <div class="spinner" id="spinner"></div>
+        <span id="btnText">⚡ Classify Resume</span>
+      </button>
+
+      <div id="error"></div>
+    </div>
+
+    <div class="card" id="result">
+      <div class="label"><span class="dot" style="background:var(--accent3)"></span> Prediction Result</div>
+      <div class="result-inner">
+        <div class="result-icon" id="resultIcon">💼</div>
+        <div class="result-text">
+          <div class="result-label">Predicted Job Category</div>
+          <div class="result-category" id="resultCategory">—</div>
+          <div class="confidence-bar-wrap" id="confWrap">
+            <div class="confidence-text">
+              <span>Confidence Score</span>
+              <span id="confText">—</span>
+            </div>
+            <div class="confidence-bar">
+              <div class="confidence-fill" id="confFill" style="width:0%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="categories-section">
+      <h3>📂 All Job Categories (Click to insert sample)</h3>
+      <div class="tags" id="tagsContainer">
+        <span class="tag" style="color:var(--muted)">Loading...</span>
+      </div>
+    </div>
+
+    <footer>
+      Built with <span>FastAPI + Scikit-learn</span> · Resume Classification ML Project
+    </footer>
+  </div>
+
+  <script>
+    // ─── KEY FIX: FastAPI runs on port 8000 ───
+    const API_URL = 'http://127.0.0.1:8000';
+
+    const icons = {
+      'Data Science':'📊','Python Developer':'🐍','Java Developer':'☕',
+      'Web Designing':'🎨','DevOps Engineer':'⚙️','Testing':'🧪','HR':'👥',
+      'Hadoop':'🐘','Blockchain':'🔗','Sales':'📈','Finance':'💰',
+      'Network Security Engineer':'🔐','SAP Developer':'🏢','Database':'🗄️',
+      'Civil Engineer':'🏗️','Mechanical Engineer':'🔧',
+      'Electrical Engineering':'⚡','Arts':'🎭','Health and fitness':'💪',
+      'ETL Developer':'🔄','Operations Manager':'📋','PMO':'📌',
+      'Business Analyst':'🧩','DotNet Developer':'💻','Automation Testing':'🤖','Advocate':'⚖️'
+    };
+
+    function updateCount() {
+      document.getElementById('charCount').textContent =
+        document.getElementById('resumeInput').value.length;
+    }
+
+    async function predict() {
+      const resumeText = document.getElementById('resumeInput').value.trim();
+      const btn        = document.getElementById('predictBtn');
+      const spinner    = document.getElementById('spinner');
+      const btnText    = document.getElementById('btnText');
+      const errorDiv   = document.getElementById('error');
+      const resultDiv  = document.getElementById('result');
+
+      if (resumeText.length < 20) {
+        showError('Please enter at least 20 characters of resume text.');
+        return;
+      }
+
+      btn.disabled = true;
+      spinner.style.display = 'block';
+      btnText.textContent = 'Analyzing...';
+      errorDiv.style.display = 'none';
+      resultDiv.style.display = 'none';
+
+      try {
+        const response = await fetch(`${API_URL}/predict`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ resume: resumeText })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.detail || 'Prediction failed');
+        }
+
+        document.getElementById('resultCategory').textContent = data.category;
+        document.getElementById('resultIcon').textContent = icons[data.category] || '💼';
+
+        if (data.confidence !== null && data.confidence !== undefined) {
+          document.getElementById('confText').textContent  = data.confidence + '%';
+          document.getElementById('confFill').style.width  = data.confidence + '%';
+          document.getElementById('confWrap').style.display = 'block';
+        } else {
+          document.getElementById('confWrap').style.display = 'none';
+        }
+
+        resultDiv.style.display = 'block';
+
+        document.querySelectorAll('.tag').forEach(t => {
+          t.classList.toggle('active', t.dataset.cat === data.category);
+        });
+
+      } catch (err) {
+        showError(
+          'Could not connect to FastAPI. Make sure you ran: <br>' +
+          '<code>uvicorn main:app --reload --port 8000</code><br><small>' + err.message + '</small>'
+        );
+      } finally {
+        btn.disabled = false;
+        spinner.style.display = 'none';
+        btnText.textContent = '⚡ Classify Resume';
+      }
+    }
+
+    function showError(msg) {
+      const errorDiv = document.getElementById('error');
+      errorDiv.innerHTML = '⚠️ ' + msg;
+      errorDiv.style.display = 'block';
+    }
+
+    async function loadCategories() {
+      const container = document.getElementById('tagsContainer');
+      try {
+        const res  = await fetch(`${API_URL}/categories`);
+        const data = await res.json();
+        container.innerHTML = data.categories.map(cat =>
+          `<span class="tag" data-cat="${cat}" onclick="insertSample('${cat}')">${icons[cat] || '📄'} ${cat}</span>`
+        ).join('');
+      } catch {
+        const cats = [
+          'Data Science','Python Developer','Java Developer','Web Designing',
+          'DevOps Engineer','Testing','HR','Blockchain','Sales','Mechanical Engineer',
+          'Electrical Engineering','Network Security Engineer','Database','Civil Engineer'
+        ];
+        container.innerHTML = cats.map(cat =>
+          `<span class="tag" data-cat="${cat}" onclick="insertSample('${cat}')">${icons[cat] || '📄'} ${cat}</span>`
+        ).join('');
+      }
+    }
+
+    function insertSample(category) {
+      const samples = {
+        'Data Science':      'Experienced Data Scientist with expertise in Python, Machine Learning, Deep Learning, TensorFlow, Keras, Pandas, NumPy, Matplotlib, SQL, and statistical modeling. Worked on predictive analytics and NLP projects.',
+        'Python Developer':  'Python Developer with 3 years experience. Skilled in Django, Flask, REST APIs, PostgreSQL, Redis, Docker, Git. Built scalable web applications and microservices.',
+        'Java Developer':    'Java Developer with Spring Boot, Hibernate, Maven, MySQL, REST APIs, JUnit testing, Microservices architecture, and AWS deployment experience.',
+        'DevOps Engineer':   'DevOps Engineer experienced in CI/CD pipelines, Docker, Kubernetes, Jenkins, Terraform, AWS, Linux administration, and infrastructure automation.',
+        'Web Designing':     'Creative Web Designer proficient in HTML5, CSS3, JavaScript, Bootstrap, Figma, Adobe XD, Photoshop, and responsive design principles.',
+        'Testing':           'QA Engineer with expertise in manual and automated testing, Selenium WebDriver, TestNG, JIRA, bug tracking, regression testing, and performance testing.',
+      };
+      const text = samples[category] || `Experienced ${category} professional with strong technical skills and domain expertise.`;
+      document.getElementById('resumeInput').value = text;
+      updateCount();
+    }
+
+    loadCategories();
+  </script>
+</body>
+</html>
